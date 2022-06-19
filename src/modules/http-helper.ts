@@ -71,7 +71,17 @@ class HttpHelper implements GetHelper, PostHelper, DeleteHelper, PutHelper {
   }
 
   public put(path: string, cb: ReqCallback): void {
-    this.defineMethod('PUT', path, cb);
+    this.defineMethod('PUT', path, (req, res) => {
+      const contentType = req.headers['content-type'];
+      if (contentType === 'application/json') {
+        req.on('data', (chunk: Buffer) => {
+          req.body = chunk.toString();
+          cb(req, res);
+        });
+      } else {
+        this.sendError(res);
+      }
+    });
   }
 
   public delete(path: string, cb: ReqCallback): void {

@@ -69,4 +69,53 @@ appRouter.post('', (req, res) => {
   }
 });
 
+appRouter.put(':userid', (req, res) => {
+  try {
+    const reqBody: Partial<UserInfo> = JSON.parse(req.body || '');
+    const invalidMessages = checkRequiredInfo(reqBody);
+    const userId = req.params?.find((param) => param.userid)?.userid || '';
+    if (!validate(userId)) {
+      invalidMessages.push('Invalid userid');
+    }
+
+    if (invalidMessages.length === 0) {
+      const updatedUser: User | undefined = store.updateUser(
+        userId,
+        <UserInfo>reqBody,
+      );
+      if (updatedUser) {
+        res.end(JSON.stringify(updatedUser));
+      } else {
+        res.statusCode = 404;
+        res.end(JSON.stringify({ message: 'User not found' }));
+      }
+    } else {
+      res.statusCode = 400;
+      res.end(JSON.stringify({ message: invalidMessages }));
+    }
+  } catch (error) {
+    res.statusCode = 500;
+    res.end(JSON.stringify({ message: 'Internal Server Error' }));
+  }
+});
+
+appRouter.delete(':userid', (req, res) => {
+  const userId = req.params?.find((param) => param.userid)?.userid || '';
+  if (validate(userId)) {
+    const user: User | undefined = store.getUserById(userId);
+    if (user) {
+      res.setHeader('content-type', 'none');
+      res.statusCode = 204;
+      store.deleteUser(userId);
+      res.end();
+    } else {
+      res.statusCode = 404;
+      res.end(JSON.stringify({ message: 'User not found' }));
+    }
+  } else {
+    res.statusCode = 400;
+    res.end(JSON.stringify({ message: 'Invalid userid' }));
+  }
+});
+
 export default appRouter;
