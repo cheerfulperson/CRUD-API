@@ -11,6 +11,10 @@ npm run start:dev
 ```
 npm run start:prod
 ```
+### Compiles and run in multi mode 
+```
+npm run start:multi
+```
 ### Lints and fixes files
 ```
 npm run lint

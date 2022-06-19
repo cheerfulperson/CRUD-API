@@ -8,6 +8,7 @@
     "test": "jest --forceExit --silent",
     "start:dev": "nodemon",
     "start:prod": "npx tsc && node dist/index.js",
+    "start:multi": "cross-env START_MODE=multi npm run start:prod",
     "lint": "eslint ./src/**/*.ts --fix"
   },
   "jest": {
@@ -17,7 +18,8 @@
       "^.+\\.tsx?$": "ts-jest"
     },
     "coveragePathIgnorePatterns": [
-      "/node_modules/"
+      "/node_modules/",
+      "/dist/resources/test"
     ]
   },
   "repository": {
@@ -48,6 +50,7 @@
     "typescript": "^4.7.3"
   },
   "dependencies": {
+    "cross-env": "^7.0.3",
     "dotenv": "^16.0.1",
     "uuid": "^8.3.2"
   }
