@@ -15,6 +15,10 @@ npm run start:prod
 ```
 npm run lint
 ```
+### Run test
+```
+npm run test
+```
 ### Build app
 ```
 npm run build
