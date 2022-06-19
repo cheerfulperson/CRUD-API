@@ -4,6 +4,7 @@ export type Params = { [key: string]: string };
 
 export interface CustomIncomingMessage extends IncomingMessage {
   params?: Params[];
+  body?: string;
 }
 
 export interface RequestListener {

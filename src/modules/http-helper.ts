@@ -7,9 +7,9 @@ import {
 } from '../models/crud-helper.model';
 import {
   CustomIncomingMessage,
-  OmitRouterListener,
   Params,
   ReqCallback,
+  RouterListener,
 } from '../models/request-listener.model';
 import Router from './router';
 
@@ -18,7 +18,9 @@ class HttpHelper implements GetHelper, PostHelper, DeleteHelper, PutHelper {
 
   private existingPathes: string[] = [];
 
-  private listeners: OmitRouterListener[] = [];
+  private existingMethods: string[] = [];
+
+  private listeners: RouterListener[] = [];
 
   private isSent = false;
 
@@ -55,7 +57,17 @@ class HttpHelper implements GetHelper, PostHelper, DeleteHelper, PutHelper {
   }
 
   public post(path: string, cb: ReqCallback): void {
-    this.defineMethod('POST', path, cb);
+    this.defineMethod('POST', path, (req, res) => {
+      const contentType = req.headers['content-type'];
+      if (contentType === 'application/json') {
+        req.on('data', (chunk: Buffer) => {
+          req.body = chunk.toString();
+          cb(req, res);
+        });
+      } else {
+        this.sendError(res);
+      }
+    });
   }
 
   public put(path: string, cb: ReqCallback): void {
@@ -89,6 +101,7 @@ class HttpHelper implements GetHelper, PostHelper, DeleteHelper, PutHelper {
 
           if (
             this.isPathCoincidence(req.url || '', listener.path)
+            && req.method === listener.method
             && !this.isSent
           ) {
             console.log(newReq.url, newReq.params);
@@ -98,7 +111,11 @@ class HttpHelper implements GetHelper, PostHelper, DeleteHelper, PutHelper {
           }
         });
 
-        if (!this.hasExistingPathes(req.url || '') && !this.isSent) {
+        if (
+          !this.hasExistingPathes(req.url || '')
+          && !this.isSent
+          && !this.hasMethods(req.method || '')
+        ) {
           this.sendError(res);
         }
 
@@ -110,19 +127,14 @@ class HttpHelper implements GetHelper, PostHelper, DeleteHelper, PutHelper {
   }
 
   private defineMethod(method: string, path: string, cb: ReqCallback): void {
-    const existingPath = `/api${
-      path.startsWith('/') || !path ? path || '' : `/${path}`
-    }`;
+    const existingPath = `/api${path.startsWith('/') || !path ? path || '' : `/${path}`
+      }`;
     this.existingPathes.push(existingPath);
+    this.existingMethods.push(method);
     this.listeners.push({
+      method,
       path: existingPath,
-      cb: (req, res) => {
-        if (req.method === method) {
-          cb(req, res);
-        } else {
-          this.sendError(res);
-        }
-      },
+      cb,
     });
   }
 
@@ -157,6 +169,10 @@ class HttpHelper implements GetHelper, PostHelper, DeleteHelper, PutHelper {
       isPathExist = this.isPathCoincidence(url, path);
     });
     return isPathExist;
+  }
+
+  private hasMethods(method: string): boolean {
+    return Boolean(this.existingMethods.find((meth) => meth === method));
   }
 
   private isPathCoincidence(url: string, path: string): boolean {
