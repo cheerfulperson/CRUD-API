@@ -6,3 +6,9 @@ export interface RequestListener {
 }
 
 export type ReqCallback = (req: IncomingMessage, res: ServerResponse) => void;
+
+export interface RouterListener {
+  method: string;
+  path: string;
+  cb: ReqCallback;
+}
