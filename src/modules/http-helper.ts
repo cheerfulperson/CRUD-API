@@ -14,7 +14,7 @@ import {
 import Router from './router';
 
 class HttpHelper implements GetHelper, PostHelper, DeleteHelper, PutHelper {
-  private app: http.Server;
+  public app: http.Server;
 
   private existingPathes: string[] = [];
 
@@ -65,7 +65,7 @@ class HttpHelper implements GetHelper, PostHelper, DeleteHelper, PutHelper {
           cb(req, res);
         });
       } else {
-        this.sendError(res);
+        this.sendError(res, 400, 'Bad Request: content-type');
       }
     });
   }
@@ -79,7 +79,7 @@ class HttpHelper implements GetHelper, PostHelper, DeleteHelper, PutHelper {
           cb(req, res);
         });
       } else {
-        this.sendError(res);
+        this.sendError(res, 400, 'Bad Request: content-type');
       }
     });
   }
@@ -106,45 +106,57 @@ class HttpHelper implements GetHelper, PostHelper, DeleteHelper, PutHelper {
         const newReq: CustomIncomingMessage = req;
         this.isSent = false;
 
+        console.log(req.method, newReq.url);
         this.listeners.forEach((listener) => {
           newReq.params = this.getRequestParams(req, listener.path);
 
           if (
-            this.isPathCoincidence(req.url || '', listener.path)
-            && req.method === listener.method
-            && !this.isSent
+            this.isPathCoincidence(req.url || '', listener.path) &&
+            req.method === listener.method &&
+            !this.isSent
           ) {
-            console.log(newReq.url, newReq.params);
             res.setHeader('Content-Type', 'application/json');
             listener.cb(newReq, res);
             this.isSent = true;
           }
-        });
 
-        if (
-          !this.hasExistingPathes(req.url || '')
-          && !this.isSent
-          && !this.hasMethods(req.method || '')
-        ) {
-          this.sendError(res);
-        }
-
-        req.once('error', () => {
-          this.sendError(res, 500, 'Internal Server Error');
+          this.handleErrors(req, res);
         });
       },
     );
   }
 
   private defineMethod(method: string, path: string, cb: ReqCallback): void {
-    const existingPath = `/api${path.startsWith('/') || !path ? path || '' : `/${path}`
-      }`;
+    const existingPath = `/api${
+      path.startsWith('/') || !path ? path || '' : `/${path}`
+    }`;
     this.existingPathes.push(existingPath);
     this.existingMethods.push(method);
     this.listeners.push({
       method,
       path: existingPath,
       cb,
+    });
+  }
+
+  private handleErrors(
+    req: http.IncomingMessage,
+    res: http.ServerResponse,
+  ): void {
+    if (
+      (!this.hasExistingPathes(req.url || '') ||
+        !this.hasMethods(req.method || '')) &&
+      !this.isSent
+    ) {
+      this.sendError(res);
+    }
+
+    req.once('error', () => {
+      this.sendError(res, 500, 'Internal Server Error');
+    });
+
+    res.once('error', () => {
+      this.sendError(res, 500, 'Internal Server Error');
     });
   }
 
@@ -176,7 +188,9 @@ class HttpHelper implements GetHelper, PostHelper, DeleteHelper, PutHelper {
   private hasExistingPathes(url: string): boolean {
     let isPathExist = false;
     this.existingPathes.forEach((path) => {
-      isPathExist = this.isPathCoincidence(url, path);
+      if (!isPathExist) {
+        isPathExist = this.isPathCoincidence(url, path);
+      }
     });
     return isPathExist;
   }
@@ -195,10 +209,7 @@ class HttpHelper implements GetHelper, PostHelper, DeleteHelper, PutHelper {
       }
     });
 
-    if (pathRoute.join('/') === urlRoute.join('/')) {
-      return true;
-    }
-    return false;
+    return pathRoute.join('/') === urlRoute.join('/');
   }
 }
 
