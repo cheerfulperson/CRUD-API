@@ -1,0 +1,57 @@
+{
+  "name": "crud-api",
+  "version": "1.0.0",
+  "description": "Node Js",
+  "main": "index.ts",
+  "scripts": {
+    "build": "npx tsc",
+    "test": "jest --forceExit --silent",
+    "start:dev": "nodemon",
+    "start:prod": "npx tsc && node dist/index.js",
+    "start:multi": "cross-env START_MODE=multi npm run start:prod",
+    "lint": "eslint ./src/**/*.ts --fix"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "verbose": true,
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/resources/test"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cheerfulperson/CRUD-API.git"
+  },
+  "author": "Egor Borodavkin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cheerfulperson/CRUD-API/issues"
+  },
+  "homepage": "https://github.com/cheerfulperson/CRUD-API#readme",
+  "devDependencies": {
+    "@types/jest": "^28.1.2",
+    "@types/node": "^18.0.0",
+    "@types/supertest": "^2.0.12",
+    "@types/uuid": "^8.3.4",
+    "@typescript-eslint/eslint-plugin": "^5.28.0",
+    "@typescript-eslint/parser": "^5.28.0",
+    "eslint": "^8.17.0",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "jest": "^28.1.1",
+    "nodemon": "^2.0.16",
+    "supertest": "^6.2.3",
+    "ts-jest": "^28.0.5",
+    "ts-node": "^10.8.1",
+    "typescript": "^4.7.3"
+  },
+  "dependencies": {
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.0.1",
+    "uuid": "^8.3.2"
+  }
+}
